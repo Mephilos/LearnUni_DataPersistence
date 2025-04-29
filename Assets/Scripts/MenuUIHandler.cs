@@ -10,15 +10,25 @@ public class MenuUIHandler : MonoBehaviour
 
     private void Start()
     {
-        if(!string.IsNullOrEmpty(DataManager.Instance.highScorePlayerName))
+        ShowTopHighScore();
+    }
+    void ShowTopHighScore()
+    {
+        var highScores = DataManager.Instance.GetHighScoreList();
+        if(highScores != null&& highScores.Count > 0)
         {
-            highScoreText.text = $"Best Score: {DataManager.Instance.highScorePlayerName} : {DataManager.Instance.highScore}";
+            var top = highScores[0];
+            highScoreText.text = $"Best Score : {top.playerName} : {top.highScore}";
+        }
+        else
+        {
+            highScoreText.text = "Best Score: None";
         }
     }
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     public void StartNew()
     {
-        DataManager.Instance.playerName = nameInputField.text;
+        string inputName = nameInputField.text;
+        DataManager.Instance.playerName = string.IsNullOrEmpty(inputName) ? "Unknown" : inputName;
         SceneManager.LoadScene(1);
     }
 

@@ -27,8 +27,8 @@ public class MainManager : MonoBehaviour
     {
         const float step = 0.6f;
         int perLine = Mathf.FloorToInt(4.0f / step);
-        
-        BestScore.text = $"Best Score: {DataManager.Instance.highScorePlayerName} : {DataManager.Instance.highScore}";
+
+        ShowTopHighScore();
         
         int[] pointCountArray = new [] {1,1,2,2,5,5};
         for (int i = 0; i < LineCount; ++i)
@@ -66,23 +66,35 @@ public class MainManager : MonoBehaviour
             }
         }
     }
+    void ShowTopHighScore()
+    {
+        var highScores = DataManager.Instance.GetHighScoreList();
+        if(highScores != null&& highScores.Count > 0)
+        {
+            var top = highScores[0];
+            BestScore.text = $"Best Score : {top.playerName} : {top.highScore}";
+        }
+        else
+        {
+            BestScore.text = "Best Score: None";
+        }
+    }
 
     void AddPoint(int point)
     {
         m_Points += point;
         ScoreText.text = $"Score : {m_Points}";
     }
-
+    
     public void GameOver()
     {
         m_GameOver = true;
         GameOverText.SetActive(true);
 
-        if(m_Points > DataManager.Instance.highScore)
-        {
-            DataManager.Instance.highScore = m_Points;
-            DataManager.Instance.highScorePlayerName = DataManager.Instance.playerName;
-            DataManager.Instance.SaveHighScores();
-        }
+        DataManager.Instance.AddNewScore(m_Points);
+    }
+    public void GoRanking()
+    {
+        SceneManager.LoadScene(2);
     }
 }

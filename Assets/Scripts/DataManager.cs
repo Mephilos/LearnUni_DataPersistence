@@ -1,10 +1,9 @@
 using System.Collections.Generic;
 using System.IO;
-using UnityEditor.Overlays;
 using UnityEngine;
 
 [System.Serializable]
-class SaveData
+public class SaveData
 {
     public string playerName;
     public int highScore;
@@ -19,8 +18,10 @@ public class DataManager : MonoBehaviour
     public static DataManager Instance;
 
     public string playerName = "Unknown";
-    public string highScorePlayerName;
-    public int highScore;
+
+    public SaveDataList saveDataList = new SaveDataList();
+
+    private string savePath;
     
 
     private void Awake()
@@ -33,27 +34,56 @@ public class DataManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
+        savePath = Application.persistentDataPath + "/savefile.json";
         LoadHighScores();
+    }
+    public void AddNewScore(int score)
+    {
+        SaveData newEntry = new SaveData
+        {
+            playerName = string.IsNullOrEmpty(playerName) ? "Unknown" : playerName,
+            highScore = score
+        };
+
+        saveDataList.highScoreList.Add(newEntry);
+        saveDataList.highScoreList.Sort((a,b) => b.highScore.CompareTo(a.highScore));
+
+        if(saveDataList.highScoreList.Count > 5)
+        {
+            saveDataList.highScoreList.RemoveRange(5,saveDataList.highScoreList.Count - 5);
+        }
+        SaveHighScores();
     }
     public void SaveHighScores()
     {
-        SaveData data = new SaveData();
-        data.playerName = highScorePlayerName;
-        data.highScore = highScore;
-
-        string json = JsonUtility.ToJson(data);
-        File.WriteAllText(Application.persistentDataPath + "/savefile.json", json);
+        try
+        {
+        string json = JsonUtility.ToJson(saveDataList, true);
+        File.WriteAllText(savePath, json);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("[DataManager] Save failed: " + e.Message);
+        }
+        
     }
     public void LoadHighScores()
     {
-        string path = Application.persistentDataPath + "/savefile.json";
-        if(File.Exists(path))
+        if(File.Exists(savePath))
         {
-            string json = File.ReadAllText(path);
-            SaveData data = JsonUtility.FromJson<SaveData>(json);
-
-            highScorePlayerName = data.playerName;
-            highScore = data.highScore;
+            try
+            {
+                string json = File.ReadAllText(savePath);
+                saveDataList = JsonUtility.FromJson<SaveDataList>(json);
+            }
+            catch(System.Exception e)
+            {
+                Debug.LogError("[DataManager] Load failed: " + e.Message);
+            }
         }
+    }
+    public List<SaveData> GetHighScoreList()
+    {
+        return saveDataList.highScoreList;
     }
 }
